@@ -1,5 +1,8 @@
 from argparse import ArgumentParser, Namespace
+from output_handler.console_output_handler import ConsoleOutputHandler
+from output_handler.json_output_handler import JSONOutputHandler
 import feedparser
+import colorama
 
 
 def parse_cmd_args() -> Namespace:
@@ -12,31 +15,35 @@ def parse_cmd_args() -> Namespace:
     return parser.parse_args()
 
 
-def main():
-    args = parse_cmd_args()
-
-    feed = feedparser.parse(args.url)
+def parse_rss(url: str) -> list:
+    feed = feedparser.parse(url)
 
     source_title = feed['feed']['title']
     news = feed['entries']
 
-    for article in news:
-        title = article['title']
-        link = article['link']
-        published = article['published']
-        media = [i['url'] for i in article['links'][1:]]
-        details = article['summary']
+    output = []
+    for item in news:
+        article = {
+            'source': source_title,
+            'title': item['title'],
+            'link': item['link'],
+            'published': item['published'],
+            'media': [i['url'] for i in item['links'][1:]],
+            'details': item['summary']
+        }
+        output.append(article)
 
-        print(f'Feed: {source_title}\n')
-        print(f'Title: {title}')
-        print(f'Date: {published}')
+    return output
 
-        print(f'\n{details}')
 
-        print('\n\nLinks:')
-        for index, link in enumerate(media):
-            print(f'[{index+1}]: {link}')
-        print('#'*20)
+def main():
+    args = parse_cmd_args()
+
+    data = parse_rss(args.url)
+
+    ConsoleOutputHandler.out(data, args.limit)
+
+    #JSONOutputHandler.out(data)
 
 
 if __name__ == "__main__":
