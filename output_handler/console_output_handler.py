@@ -1,5 +1,6 @@
 import textwrap
-from colorama import Fore, init as colorama_init
+from colorama import Fore
+from colorama import init as colorama_init
 
 from output_handler.base_output_handler import BaseOutputHandler
 
