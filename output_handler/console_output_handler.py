@@ -1,4 +1,6 @@
 import textwrap
+
+import colorama
 from colorama import Fore
 from colorama import init as colorama_init
 
@@ -23,7 +25,9 @@ class ConsoleOutputHandler(BaseOutputHandler):
             for index, link in enumerate(article["media"]):
                 links += Fore.MAGENTA + f'[{index + 1}]' + Fore.RESET + ':' + Fore.LIGHTBLUE_EX + f' {link}'
 
-            output = f'''
+                output = ''
+
+                output += f'''
 {feed_str}
 
 {title_str}
@@ -34,5 +38,6 @@ class ConsoleOutputHandler(BaseOutputHandler):
 
 {Fore.GREEN + 'Links' + Fore.RESET + ':'}
 {links}
-                    '''
-            print(textwrap.dedent(output))
+                        '''
+
+                print(textwrap.dedent(output))
