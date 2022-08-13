@@ -35,8 +35,8 @@ class SQLHandler:
                 cur.execute(f"SELECT MAX({column_name}) FROM {table_name};")
                 return cur.fetchone()
 
-    def select(self, column_name: str, table_name: str):
+    def request(self, req: str) :
         with self.connect() as conn:
             with conn.cursor() as cur:
-                cur.execute(f"SELECT {column_name} FROM {table_name};")
+                cur.execute(req)
                 return cur.fetchall()

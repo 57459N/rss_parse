@@ -27,8 +27,8 @@ class NewsModel(BaseModel):
     source: str = field(default='')
     title: str = field(default='')
     link: str = field(default='')
-    published: str = field(default='')
     details: str = field(default='')
+    published: str = field(default='')
     __table = 'news'
 
 
