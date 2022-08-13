@@ -1,8 +1,10 @@
 from argparse import ArgumentParser, Namespace
-from output_handler.console_output_handler import ConsoleOutputHandler
-from output_handler.json_output_handler import JSONOutputHandler
 import feedparser
-import colorama
+import psycopg2
+from datetime import datetime
+from db.sql_handler import SQLHandler
+from db.models import NewsModel, MediaModel
+from output_handler.console_output_handler import ConsoleOutputHandler
 
 
 def parse_cmd_args() -> Namespace:
@@ -36,14 +38,46 @@ def parse_rss(url: str) -> list:
     return output
 
 
+def insert_news(data: list[dict], insert_old: bool = False):
+    connection = SQLHandler()
+    db_date_format = '%Y-%m-%d'
+    parse_date_format = '%a, %d %b %Y %H:%M:%S %z'
+
+    if insert_old:
+        actual_data = data
+    else:
+        last_date = connection.select_max('published', 'news')[0]
+        actual_data = [el for el in data if (datetime.strptime(el['published'], parse_date_format).date() >= last_date)]
+
+    for el in actual_data:
+        news_model = NewsModel(el['source'], el['title'], el['link'], el['published'], el['details'])
+        try:
+            connection.insert(news_model, 'news')
+            id = connection.select_max('id', 'news')[0]
+            for link in el['media']:
+                media_model = MediaModel(link=link, news_id=id)
+                connection.insert(media_model, 'media')
+                id += 1
+
+        except psycopg2.errors.UniqueViolation:
+            pass
+        except psycopg2.errors.StringDataRightTruncation:
+            print(news_model)
+
+def convert_date(date: str) -> str:
+    return datetime.strptime(date, '%a, %d %b %Y %H:%M:%S %z').strftime('%Y-%m-%d')
+
+
 def main():
     args = parse_cmd_args()
 
-    data = parse_rss(args.url)
+    data = parse_rss(args.url)[:]
 
-    ConsoleOutputHandler.out(data, args.limit)
+    insert_news(data, True)
 
-    #JSONOutputHandler.out(data)
+    #ConsoleOutputHandler.out(data, args.limit)
+
+    # JSONOutputHandler.out(data)
 
 
 if __name__ == "__main__":
