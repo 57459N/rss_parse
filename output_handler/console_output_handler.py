@@ -37,4 +37,4 @@ class ConsoleOutputHandler(BaseOutputHandler):
 {Fore.GREEN + 'Links' + Fore.RESET + ':'}
 {links}
                     '''
-            print(textwrap.dedent(output))
+            print(output)

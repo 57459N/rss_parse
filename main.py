@@ -50,7 +50,8 @@ def insert_news(data: list[dict], insert_old: bool = False):
         actual_data = data
     else:
         last_date = connection.select_max('published', 'news')[0]
-        actual_data = [el for el in data if (datetime.strptime(el['published'], parse_date_format).date() >= last_date)]
+        actual_data = [el for el in data
+                       if (datetime.strptime(el['published'], parse_date_format).date() >= last_date)]
 
     for el in actual_data:
         news_model = NewsModel(source=el['source'],
@@ -60,11 +61,10 @@ def insert_news(data: list[dict], insert_old: bool = False):
                                details=el['details'])
         try:
             connection.insert(news_model, 'news')
-            id = connection.select_max('id', 'news')[0]
+            news_id = connection.select_max('id', 'news')[0]
             for link in el['media']:
-                media_model = MediaModel(link=link, news_id=id)
+                media_model = MediaModel(link=link, news_id=news_id)
                 connection.insert(media_model, 'media')
-                id += 1
 
         except psycopg2.errors.UniqueViolation:
             pass
@@ -81,12 +81,13 @@ def read_cached_news(date: str, limit: int = 0) -> list:
 
     limit = str(limit) if limit else '*'
 
-    recieved_data = connection.request(f"select {limit} from news where published >= '{date}';")
+    received_data = connection.request(f"select {limit} from news where published >= '{date}';")
 
     data = []
-    for article in recieved_data:
+    for article in received_data:
         idx = article[0]
-        media = [link[1] for link in connection.request(f"select * from media where news_id = {idx};")]
+        media = [link[1] for link in connection.request(
+            f"select * from media where news_id = {idx};")]
         data_to_add = NewsModel(*article[1:]).asdict()
         data_to_add['media'] = media
         data.append(data_to_add)
@@ -100,7 +101,7 @@ def main():
     if args.date:
         data = read_cached_news(args.date)
     else:
-        data = parse_rss(args.url)[9:]
+        data = parse_rss(args.url)
         insert_news(data, True)
 
     ConsoleOutputHandler.out(data, args.limit)
